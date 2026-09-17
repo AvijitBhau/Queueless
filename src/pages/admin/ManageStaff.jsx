@@ -46,7 +46,9 @@ export default function ManageStaff() {
       if (fnErr) throw new Error(fnErr.message);
       if (data?.error) throw new Error(data.error);
       toast.success(`Staff "${form.username}" created!`);
-      setShowModal(false); setForm({ username: '', email: '', password: '' }); fetchStaff();
+      setShowModal(false);
+      setForm({ username: '', email: '', password: '' });
+      await fetchStaff(); // await: list must be refreshed before setCreating(false) re-renders
     } catch (err) { setError(err.message); }
     finally { setCreating(false); }
   }

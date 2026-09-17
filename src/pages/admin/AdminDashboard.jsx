@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { StatCard } from '../../components/ui/GlassCard';
@@ -35,13 +36,13 @@ export default function AdminDashboard() {
         <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { label: 'Manage Staff', desc: 'Create and manage staff', icon: Users, color: '#00d4ff', href: '/admin/staff' },
-            { label: 'Manage Queues', desc: 'Create and run queues', icon: Layers, color: '#10b981', href: '/admin/queues' },
-            { label: 'Analytics', desc: 'View performance data', icon: TrendingUp, color: '#7c3aed', href: '/admin/analytics' },
+            { label: 'Manage Staff', desc: 'Create and manage staff', icon: Users, color: '#00d4ff', to: '/admin/staff' },
+            { label: 'Manage Queues', desc: 'Create and run queues', icon: Layers, color: '#10b981', to: '/admin/queues' },
+            { label: 'Analytics', desc: 'View performance data', icon: TrendingUp, color: '#7c3aed', to: '/admin/analytics' },
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <a key={item.href} href={item.href} className="glass-hover glass rounded-xl p-4 flex items-center gap-3">
+              <Link key={item.to} to={item.to} className="glass-hover glass rounded-xl p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}20` }}>
                   <Icon size={18} style={{ color: item.color }} />
                 </div>
@@ -49,7 +50,7 @@ export default function AdminDashboard() {
                   <p className="font-semibold text-white text-sm">{item.label}</p>
                   <p className="text-xs text-slate-400">{item.desc}</p>
                 </div>
-              </a>
+              </Link>
             );
           })}
         </div>

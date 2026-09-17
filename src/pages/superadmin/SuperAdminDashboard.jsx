@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { StatCard } from '../../components/ui/GlassCard';
@@ -34,12 +35,12 @@ export default function SuperAdminDashboard() {
         <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
-            { label: 'Manage Admins', desc: 'Create and control admin accounts', icon: Users, color: '#7c3aed', href: '/superadmin/admins' },
-            { label: 'System Stats', desc: 'View usage analytics', icon: TrendingUp, color: '#00d4ff', href: '/superadmin/stats' },
+            { label: 'Manage Admins', desc: 'Create and control admin accounts', icon: Users, color: '#7c3aed', to: '/superadmin/admins' },
+            { label: 'System Stats', desc: 'View usage analytics', icon: TrendingUp, color: '#00d4ff', to: '/superadmin/stats' },
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <a key={item.href} href={item.href} className="glass-hover glass rounded-xl p-4 flex items-center gap-3">
+              <Link key={item.to} to={item.to} className="glass-hover glass rounded-xl p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}20` }}>
                   <Icon size={18} style={{ color: item.color }} />
                 </div>
@@ -47,7 +48,7 @@ export default function SuperAdminDashboard() {
                   <p className="font-semibold text-white text-sm">{item.label}</p>
                   <p className="text-xs text-slate-400">{item.desc}</p>
                 </div>
-              </a>
+              </Link>
             );
           })}
         </div>

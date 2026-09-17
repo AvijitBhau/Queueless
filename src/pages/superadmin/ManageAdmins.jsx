@@ -45,7 +45,7 @@ export default function ManageAdmins() {
       toast.success(`Admin "${form.username}" created!`);
       setShowModal(false);
       setForm({ username: '', email: '', password: '' });
-      fetchAdmins();
+      await fetchAdmins(); // await: list must be refreshed before setCreating(false) re-renders
     } catch (err) { setError(err.message); }
     finally { setCreating(false); }
   }

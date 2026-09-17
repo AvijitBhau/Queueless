@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useStore';
 
 export function useAuth() {
-  const { user, profile, setUser, setProfile, logout } = useAuthStore();
-  const [loading, setLoading] = useState(true);
+  const { user, profile, loading, setUser, setProfile, setLoading, logout } = useAuthStore();
+  // loading is now shared Zustand state — NOT local useState.
+  // This means every useAuth() caller reads the same value.
+  // ProtectedRoute will never re-enter a loading state after initial resolution,
+  // even if it re-mounts, because the store already holds loading=false.
 
   useEffect(() => {
     // Get initial session
