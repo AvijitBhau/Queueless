@@ -29,16 +29,19 @@ export default function ManageAdmins() {
   async function createAdmin() {
     setCreating(true); setError('');
     try {
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email: form.email, password: form.password,
-        options: { data: { username: form.username, role: 'admin' } },
+      // Call the secure Edge Function — service-role key never touches the browser.
+      // email_confirm: true is set server-side, so no verification email is sent.
+      // The Super Admin's own session is untouched (we never call signUp here).
+      const { data, error: fnErr } = await supabase.functions.invoke('create-user', {
+        body: {
+          username: form.username,
+          email: form.email,
+          password: form.password,
+          role: 'admin',
+        },
       });
-      if (authErr) throw authErr;
-      const { error: profileErr } = await supabase.from('profiles').upsert({
-        id: authData.user.id, username: form.username, email: form.email,
-        role: 'admin', is_active: true,
-      });
-      if (profileErr) throw profileErr;
+      if (fnErr) throw new Error(fnErr.message);
+      if (data?.error) throw new Error(data.error);
       toast.success(`Admin "${form.username}" created!`);
       setShowModal(false);
       setForm({ username: '', email: '', password: '' });

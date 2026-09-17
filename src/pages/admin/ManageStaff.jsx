@@ -32,16 +32,19 @@ export default function ManageStaff() {
   async function createStaff() {
     setCreating(true); setError('');
     try {
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email: form.email, password: form.password,
-        options: { data: { username: form.username, role: 'staff' } },
+      // Call the secure Edge Function — service-role key never touches the browser.
+      // email_confirm: true is set server-side, so no verification email is sent.
+      // The Admin's own session is untouched (we never call signUp here).
+      const { data, error: fnErr } = await supabase.functions.invoke('create-user', {
+        body: {
+          username: form.username,
+          email: form.email,
+          password: form.password,
+          role: 'staff',
+        },
       });
-      if (authErr) throw authErr;
-      const { error: profileErr } = await supabase.from('profiles').upsert({
-        id: authData.user.id, username: form.username, email: form.email,
-        role: 'staff', is_active: true, created_by: profile.id,
-      });
-      if (profileErr) throw profileErr;
+      if (fnErr) throw new Error(fnErr.message);
+      if (data?.error) throw new Error(data.error);
       toast.success(`Staff "${form.username}" created!`);
       setShowModal(false); setForm({ username: '', email: '', password: '' }); fetchStaff();
     } catch (err) { setError(err.message); }
@@ -104,13 +107,13 @@ export default function ManageStaff() {
       <Modal open={showModal} onClose={() => setShowModal(false)} title="Create Staff Account">
         <div className="space-y-4">
           <div className="space-y-1.5"><label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Username</label>
-            <div className="relative"><User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <div className="relative">
               <input className="input-glass pl-9" placeholder="staff_name" value={form.username} onChange={(e) => setForm(f => ({ ...f, username: e.target.value }))} /></div></div>
           <div className="space-y-1.5"><label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email</label>
-            <div className="relative"><Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <div className="relative">
               <input className="input-glass pl-9" type="email" placeholder="staff@example.com" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} /></div></div>
           <div className="space-y-1.5"><label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Password</label>
-            <div className="relative"><Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <div className="relative">
               <input className="input-glass pl-9 pr-9" type={showPass ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} />
               <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500">{showPass ? <EyeOff size={15} /> : <Eye size={15} />}</button></div></div>
           {error && (<div className="flex items-center gap-2 p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}><AlertCircle size={14} className="text-red-400" /><p className="text-red-400 text-sm">{error}</p></div>)}
