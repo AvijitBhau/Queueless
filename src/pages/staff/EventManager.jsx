@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useRealtimeQueue } from '../../hooks/useRealtimeQueue';
 import { calcEstimatedWait } from '../../lib/queueUtils';
-import { SkipForward, PauseCircle, PlayCircle, CheckCircle, Users, Clock, ArrowLeft, Hash } from 'lucide-react';
+import { SkipForward, PauseCircle, CheckCircle, Users, Clock, ArrowLeft, Hash } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function TicketBadge({ number, onAction, actionLabel, actionColor, children }) {
@@ -40,7 +40,13 @@ export default function EventManager() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Derived state
+  // Always-current ref so event handlers never capture stale ticket state.
+  // React state updates are async; without this ref, callNext() can read
+  // the empty initial tickets array even after Realtime has fired fetchAll().
+  const ticketsRef = useRef(tickets);
+  useEffect(() => { ticketsRef.current = tickets; }, [tickets]);
+
+  // Derived state (computed fresh on every render from up-to-date tickets)
   const waitingTickets = tickets.filter(t => t.status === 'waiting').sort((a, b) => a.ticket_number - b.ticket_number);
   const servingTicket = tickets.find(t => t.status === 'serving');
   const holdTickets = tickets.filter(t => t.status === 'hold').sort((a, b) => a.ticket_number - b.ticket_number);
@@ -52,7 +58,10 @@ export default function EventManager() {
       supabase.from('tickets').select('*').eq('event_id', eventId).order('ticket_number'),
     ]);
     if (eventRes.data) setEvent(eventRes.data);
-    if (ticketRes.data) setTickets(ticketRes.data);
+    if (ticketRes.data) {
+      setTickets(ticketRes.data);
+      ticketsRef.current = ticketRes.data; // keep ref in sync immediately
+    }
     setLoading(false);
   }, [eventId]);
 
@@ -61,53 +70,69 @@ export default function EventManager() {
   // Subscribe to realtime updates
   useRealtimeQueue(eventId, fetchAll);
 
-  async function callNext() {
-    if (!waitingTickets.length) { toast('No more people in queue!', { icon: '🎉' }); return; }
+  // ── callNext: reads from ticketsRef so it always has the latest tickets ──
+  const callNext = useCallback(async () => {
+    // Derive waiting list from the ref, not from closed-over state.
+    const currentWaiting = ticketsRef.current
+      .filter(t => t.status === 'waiting')
+      .sort((a, b) => a.ticket_number - b.ticket_number);
+
+    if (!currentWaiting.length) {
+      toast('No more people in queue!', { icon: '🎉' });
+      return;
+    }
     setActionLoading(true);
     try {
-      // Mark current serving as done
-      if (servingTicket) {
-        await supabase.from('tickets').update({ status: 'done', served_at: new Date().toISOString() }).eq('id', servingTicket.id);
+      const currentServing = ticketsRef.current.find(t => t.status === 'serving');
+      // Mark current serving ticket as done
+      if (currentServing) {
+        await supabase
+          .from('tickets')
+          .update({ status: 'done', served_at: new Date().toISOString() })
+          .eq('id', currentServing.id);
       }
-      // Promote first waiting to serving
-      const next = waitingTickets[0];
+      // Promote the first WAITING ticket to serving
+      const next = currentWaiting[0];
       await supabase.from('tickets').update({ status: 'serving' }).eq('id', next.id);
       await fetchAll();
       toast.success(`Now serving #${next.ticket_number}`);
     } finally { setActionLoading(false); }
-  }
+  }, [fetchAll]);
 
-  async function holdCurrent() {
-    if (!servingTicket) { toast.error('No one is currently being served'); return; }
+  const holdCurrent = useCallback(async () => {
+    const currentServing = ticketsRef.current.find(t => t.status === 'serving');
+    if (!currentServing) { toast.error('No one is currently being served'); return; }
     setActionLoading(true);
-    await supabase.from('tickets').update({ status: 'hold' }).eq('id', servingTicket.id);
-    // Optionally auto-call next
-    if (waitingTickets.length > 0) {
-      await supabase.from('tickets').update({ status: 'serving' }).eq('id', waitingTickets[0].id);
-      toast.success(`#${servingTicket.ticket_number} held. Now serving #${waitingTickets[0].ticket_number}`);
+    const currentWaiting = ticketsRef.current
+      .filter(t => t.status === 'waiting')
+      .sort((a, b) => a.ticket_number - b.ticket_number);
+    await supabase.from('tickets').update({ status: 'hold' }).eq('id', currentServing.id);
+    if (currentWaiting.length > 0) {
+      await supabase.from('tickets').update({ status: 'serving' }).eq('id', currentWaiting[0].id);
+      toast.success(`#${currentServing.ticket_number} held. Now serving #${currentWaiting[0].ticket_number}`);
     } else {
-      toast(`#${servingTicket.ticket_number} placed on hold`, { icon: '⏸' });
+      toast(`#${currentServing.ticket_number} placed on hold`, { icon: '⏸' });
     }
     await fetchAll();
     setActionLoading(false);
-  }
+  }, [fetchAll]);
 
-  async function recallHeld(ticket) {
+  const recallHeld = useCallback(async (ticket) => {
     setActionLoading(true);
-    // If someone is currently being served, first hold them
-    if (servingTicket) {
-      await supabase.from('tickets').update({ status: 'hold' }).eq('id', servingTicket.id);
+    const currentServing = ticketsRef.current.find(t => t.status === 'serving');
+    if (currentServing) {
+      await supabase.from('tickets').update({ status: 'hold' }).eq('id', currentServing.id);
     }
     await supabase.from('tickets').update({ status: 'serving' }).eq('id', ticket.id);
     await fetchAll();
     toast.success(`Recalling #${ticket.ticket_number}`);
     setActionLoading(false);
-  }
+  }, [fetchAll]);
 
   async function endEvent() {
-    if (!window.confirm('Mark this event as completed? This cannot be undone.')) return;
+    if (!window.confirm('Mark this patient queue as completed? This cannot be undone.')) return;
     await supabase.from('events').update({ status: 'completed' }).eq('id', eventId);
-    toast.success('Event marked as completed');
+    toast.success('Patient queue marked as completed');
     navigate('/staff');
   }
 
@@ -140,10 +165,10 @@ export default function EventManager() {
             <h1 className="text-2xl font-bold text-white">{event.name}</h1>
             <span className="badge-active">LIVE</span>
           </div>
-          <p className="text-sm text-slate-400">{event.time_per_person} min per person</p>
+          <p className="text-sm text-slate-400">PHC Patient Queue · {event.time_per_person} min avg. per patient</p>
         </div>
         <button onClick={endEvent} className="btn-danger text-sm flex items-center gap-1.5 flex-shrink-0">
-          <CheckCircle size={15} /> End Event
+          <CheckCircle size={15} /> End Queue
         </button>
       </div>
 
@@ -160,7 +185,7 @@ export default function EventManager() {
             className="glass rounded-3xl p-6 md:p-8"
             style={{ border: '1px solid rgba(16,185,129,0.2)' }}
           >
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Currently Serving</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Currently Serving Patient</p>
             <div className="flex items-center justify-center my-4">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -248,7 +273,7 @@ export default function EventManager() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Users size={16} className="text-slate-400" />
-                <h3 className="font-semibold text-white">Waiting Queue</h3>
+                <h3 className="font-semibold text-white">Patient Waiting Queue</h3>
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 <Clock size={13} />

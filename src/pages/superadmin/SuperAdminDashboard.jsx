@@ -24,11 +24,11 @@ export default function SuperAdminDashboard() {
 
   return (
     <div>
-      <PageHeader title="Super Admin" subtitle="System-wide overview and control panel" />
+      <PageHeader title="Super Admin" subtitle="System-wide PHC oversight and control panel" />
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Admins" value={stats.total} icon={Users} color="#7c3aed" delay={0} />
+        <StatCard title="Total PHC Admins" value={stats.total} icon={Users} color="#7c3aed" delay={0} />
         <StatCard title="Active Admins" value={stats.active} icon={Activity} color="#10b981" delay={0.08} />
-        <StatCard title="Live Queues" value={stats.events} icon={TrendingUp} color="#00d4ff" delay={0.16} />
+        <StatCard title="Live Patient Queues" value={stats.events} icon={TrendingUp} color="#00d4ff" delay={0.16} />
         <StatCard title="System Status" value="Healthy" icon={ShieldCheck} color="#10b981" delay={0.24} />
       </div>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass rounded-2xl p-6">

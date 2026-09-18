@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useUIStore } from '../../store/useStore';
 import {
   LayoutDashboard, Users, Settings, LogOut, ChevronLeft, ChevronRight,
-  QrCode, ListChecks, BarChart3, ShieldCheck, UserCog, Layers, History
+  QrCode, ListChecks, BarChart3, ShieldCheck, UserCog, Layers, History, HeartPulse
 } from 'lucide-react';
 
 const navByRole = {
@@ -16,23 +16,24 @@ const navByRole = {
   ],
   admin: [
     { label: 'Overview', icon: LayoutDashboard, to: '/admin' },
-    { label: 'Manage Staff', icon: Users, to: '/admin/staff' },
-    { label: 'Manage Queues', icon: Layers, to: '/admin/queues' },
+    { label: 'Healthcare Staff', icon: Users, to: '/admin/staff' },
+    { label: 'Patient Queues', icon: Layers, to: '/admin/queues' },
     { label: 'Analytics', icon: BarChart3, to: '/admin/analytics' },
+    { label: 'Health Intelligence', icon: HeartPulse, to: '/admin/health-intelligence' },
     { label: 'Settings', icon: Settings, to: '/admin/settings' },
   ],
   staff: [
     { label: 'Overview', icon: LayoutDashboard, to: '/staff' },
-    { label: 'Active Events', icon: ListChecks, to: '/staff/events' },
-    { label: 'Past Events', icon: History, to: '/staff/past-events' },
+    { label: 'Active Queues', icon: ListChecks, to: '/staff/events' },
+    { label: 'Completed Queues', icon: History, to: '/staff/past-events' },
     { label: 'Settings', icon: Settings, to: '/staff/settings' },
   ],
 };
 
 const roleColors = {
   superadmin: { accent: '#7c3aed', label: 'Super Admin', icon: ShieldCheck },
-  admin: { accent: '#00d4ff', label: 'Admin', icon: UserCog },
-  staff: { accent: '#10b981', label: 'Staff', icon: Users },
+  admin: { accent: '#00d4ff', label: 'PHC Admin', icon: UserCog },
+  staff: { accent: '#10b981', label: 'Healthcare Staff', icon: Users },
 };
 
 export default function Sidebar() {
@@ -75,7 +76,7 @@ export default function Sidebar() {
               transition={{ duration: 0.2 }}
               className="font-bold text-lg gradient-text whitespace-nowrap"
             >
-              Queueless
+              QueueLess <span style={{ color: '#10b981' }}>Health</span>
             </motion.span>
           )}
         </AnimatePresence>

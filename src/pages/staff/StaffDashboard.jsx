@@ -66,8 +66,8 @@ export default function StaffDashboard() {
   return (
     <div>
       <PageHeader
-        title="Staff Dashboard"
-        subtitle={`Welcome, ${profile?.username || 'Staff'}! Manage your queue events.`}
+        title="Healthcare Staff Dashboard"
+        subtitle={`Welcome, ${profile?.username || 'Staff'}! Manage patient queues for your PHC.`}
         actions={
           <motion.button
             whileHover={{ scale: 1.04 }}
@@ -75,7 +75,7 @@ export default function StaffDashboard() {
             onClick={() => setShowCreate(true)}
             className="btn-primary flex items-center gap-2"
           >
-            <Plus size={16} /> Create Event
+            <Plus size={16} /> New Patient Queue
           </motion.button>
         }
       />
@@ -99,10 +99,10 @@ export default function StaffDashboard() {
           >
             <Calendar size={36} className="text-emerald-400" />
           </motion.div>
-          <h2 className="text-xl font-bold text-white mb-2">No Active Events</h2>
-          <p className="text-slate-400 mb-6">Create your first queue event to get started.</p>
+          <h2 className="text-xl font-bold text-white mb-2">No Active Patient Queues</h2>
+          <p className="text-slate-400 mb-6">Create your first patient queue to get started.</p>
           <button onClick={() => setShowCreate(true)} className="btn-primary">
-            + Create Event
+            + New Patient Queue
           </button>
         </motion.div>
       ) : (
@@ -141,7 +141,7 @@ export default function StaffDashboard() {
                   <div className="flex items-center gap-4 mb-4">
                     <div className="flex items-center gap-1.5">
                       <Users size={14} className="text-slate-400" />
-                      <span className="text-sm text-slate-300">{ticketCount} in queue</span>
+                      <span className="text-sm text-slate-300">{ticketCount} patients waiting</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Clock size={14} className="text-slate-400" />
@@ -185,13 +185,13 @@ export default function StaffDashboard() {
       )}
 
       {/* Create Event Modal */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create Queue Event">
+      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New Patient Queue">
         <div className="space-y-5">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Event Name</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Queue / Department Name</label>
             <input
               className="input-glass"
-              placeholder="e.g. Bank Counter, Registration Desk..."
+              placeholder="e.g. OPD Registration, Pharmacy, Lab Tests..."
               value={form.name}
               onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
               onKeyDown={(e) => e.key === 'Enter' && createEvent()}
@@ -200,7 +200,7 @@ export default function StaffDashboard() {
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Time per Person (minutes)
+              Avg. Time per Patient (minutes)
             </label>
             <div className="flex items-center gap-3">
               <input
@@ -220,8 +220,8 @@ export default function StaffDashboard() {
           >
             <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
             <p className="text-xs text-slate-300">
-              A unique QR code will be generated for customers to join the queue.
-              Ticket numbers start at <span className="text-white font-semibold">#1</span>.
+              A unique QR code will be generated for patients to join the queue.
+              Patient tokens start at <span className="text-white font-semibold">#1</span>.
             </p>
           </div>
           <div className="flex gap-3">
@@ -234,7 +234,7 @@ export default function StaffDashboard() {
             >
               {creating
                 ? <><div className="w-4 h-4 rounded-full animate-spin" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white' }} />Creating...</>
-                : '🚀 Create Queue'}
+                : '🏥 Start Queue'}
             </motion.button>
           </div>
         </div>
@@ -245,7 +245,7 @@ export default function StaffDashboard() {
         {showQR && (
           <div className="flex flex-col items-center gap-5">
             <p className="text-sm text-slate-400 text-center">
-              Scan to join the queue. Share this with customers.
+              Patients scan to join the queue. Display at the PHC reception.
             </p>
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}

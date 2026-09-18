@@ -21,6 +21,7 @@ import ManageStaff from './pages/admin/ManageStaff';
 import ManageQueues from './pages/admin/ManageQueues';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminSettings from './pages/admin/AdminSettings';
+import HealthIntelligence from './pages/admin/HealthIntelligence';
 
 // Staff
 import StaffDashboard from './pages/staff/StaffDashboard';
@@ -90,6 +91,7 @@ export default function App() {
           <Route path="staff" element={<ManageStaff />} />
           <Route path="queues" element={<ManageQueues />} />
           <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="health-intelligence" element={<HealthIntelligence />} />
           <Route path="settings" element={<AdminSettings />} />
           {/* Admin can also manage individual events */}
           <Route path="events/:eventId" element={<EventManager />} />

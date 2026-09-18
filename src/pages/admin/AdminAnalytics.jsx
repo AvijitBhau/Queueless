@@ -40,14 +40,14 @@ export default function AdminAnalytics() {
 
   return (
     <div>
-      <PageHeader title="Analytics" subtitle="Queue performance and usage metrics" />
+      <PageHeader title="Patient Analytics" subtitle="Patient footfall and queue performance metrics" />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StatCard title="Total Events" value={stats.events} icon={Layers} color="#00d4ff" delay={0} />
-        <StatCard title="Tickets Issued" value={stats.tickets} icon={Users} color="#7c3aed" delay={0.08} />
-        <StatCard title="Completed" value={stats.completed} icon={CheckCircle} color="#10b981" delay={0.16} />
+        <StatCard title="Total Patient Queues" value={stats.events} icon={Layers} color="#00d4ff" delay={0} />
+        <StatCard title="Patient Tokens Issued" value={stats.tickets} icon={Users} color="#7c3aed" delay={0.08} />
+        <StatCard title="Queues Completed" value={stats.completed} icon={CheckCircle} color="#10b981" delay={0.16} />
       </div>
       <GlassCard className="p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Tickets Issued – Last 7 Days</h2>
+        <h2 className="text-lg font-semibold text-white mb-4">Patient Tokens — Last 7 Days</h2>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />

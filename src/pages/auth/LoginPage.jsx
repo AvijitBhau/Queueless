@@ -56,8 +56,9 @@ export default function LoginPage() {
             >
               <QrCode size={28} color="white" />
             </motion.div>
-            <h1 className="text-3xl font-bold gradient-text mb-1">Queueless</h1>
-            <p className="text-slate-400 text-sm">Sign in to your dashboard</p>
+            <h1 className="text-3xl font-bold gradient-text mb-1">QueueLess <span style={{ color: '#10b981' }}>Health</span></h1>
+            <p className="text-slate-400 text-sm text-center">AI-powered patient flow &amp; health resource intelligence</p>
+            <p className="text-slate-500 text-xs mt-1">Sign in to your PHC dashboard</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

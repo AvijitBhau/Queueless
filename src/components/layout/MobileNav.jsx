@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import {
   LayoutDashboard, Users, Settings, LogOut, X, Menu,
-  QrCode, ListChecks, BarChart3, ShieldCheck, UserCog, Layers, History
+  QrCode, ListChecks, BarChart3, ShieldCheck, UserCog, Layers, History, HeartPulse
 } from 'lucide-react';
 
 const navByRole = {
@@ -16,23 +16,24 @@ const navByRole = {
   ],
   admin: [
     { label: 'Overview', icon: LayoutDashboard, to: '/admin' },
-    { label: 'Manage Staff', icon: Users, to: '/admin/staff' },
-    { label: 'Manage Queues', icon: Layers, to: '/admin/queues' },
+    { label: 'Healthcare Staff', icon: Users, to: '/admin/staff' },
+    { label: 'Patient Queues', icon: Layers, to: '/admin/queues' },
     { label: 'Analytics', icon: BarChart3, to: '/admin/analytics' },
+    { label: 'Health Intelligence', icon: HeartPulse, to: '/admin/health-intelligence' },
     { label: 'Settings', icon: Settings, to: '/admin/settings' },
   ],
   staff: [
     { label: 'Overview', icon: LayoutDashboard, to: '/staff' },
-    { label: 'Active Events', icon: ListChecks, to: '/staff/events' },
-    { label: 'Past Events', icon: History, to: '/staff/past-events' },
+    { label: 'Active Queues', icon: ListChecks, to: '/staff/events' },
+    { label: 'Completed Queues', icon: History, to: '/staff/past-events' },
     { label: 'Settings', icon: Settings, to: '/staff/settings' },
   ],
 };
 
 const roleColors = {
   superadmin: { accent: '#7c3aed', label: 'Super Admin', icon: ShieldCheck },
-  admin: { accent: '#00d4ff', label: 'Admin', icon: UserCog },
-  staff: { accent: '#10b981', label: 'Staff', icon: Users },
+  admin: { accent: '#00d4ff', label: 'PHC Admin', icon: UserCog },
+  staff: { accent: '#10b981', label: 'Healthcare Staff', icon: Users },
 };
 
 export default function MobileNav() {
@@ -64,7 +65,7 @@ export default function MobileNav() {
           >
             <QrCode size={14} color="white" />
           </div>
-          <span className="font-bold gradient-text">Queueless</span>
+          <span className="font-bold gradient-text">QueueLess <span style={{ color: '#10b981' }}>Health</span></span>
         </div>
         <button
           onClick={() => setOpen(true)}
@@ -101,7 +102,7 @@ export default function MobileNav() {
                   >
                     <QrCode size={18} color="white" />
                   </div>
-                  <span className="font-bold text-lg gradient-text">Queueless</span>
+                  <span className="font-bold text-lg gradient-text">QueueLess <span style={{ color: '#10b981' }}>Health</span></span>
                 </div>
                 <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
                   <X size={18} className="text-slate-400" />

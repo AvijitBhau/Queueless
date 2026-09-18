@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import PageHeader from '../../components/ui/PageHeader';
 import Modal from '../../components/ui/Modal';
 import { GlassCard } from '../../components/ui/GlassCard';
-import { Plus, User, Mail, Lock, Eye, EyeOff, ToggleLeft, ToggleRight, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { Plus, User, Eye, EyeOff, ToggleLeft, ToggleRight, Trash2, Clock, AlertCircle } from 'lucide-react';
 import { timeAgo } from '../../lib/queueUtils';
 import toast from 'react-hot-toast';
 
@@ -17,39 +17,67 @@ export default function ManageAdmins() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
 
+  // ── Initial fetch ────────────────────────────────────────────────────────
   useEffect(() => { fetchAdmins(); }, []);
 
   async function fetchAdmins() {
     setLoading(true);
-    const { data } = await supabase.from('profiles').select('*').eq('role', 'admin').order('created_at', { ascending: false });
-    setAdmins(data || []);
+    const { data, error: fetchErr } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'admin')
+      .order('created_at', { ascending: false });
+
+    if (fetchErr) {
+      // Surface the actual error so it is visible during debugging.
+      // Common cause: recursive RLS on public.profiles.
+      // Fix: run supabase/migrations/002_fix_profiles_rls.sql in Supabase SQL Editor.
+      console.error('[ManageAdmins] fetchAdmins error:', fetchErr.message, fetchErr);
+      toast.error(`Could not load admin list: ${fetchErr.message}`);
+    } else {
+      setAdmins(data || []);
+    }
     setLoading(false);
   }
 
+  // ── Supabase Realtime: auto-refresh when any profile is INSERT/UPDATE/DELETE'd ──
+  // This means newly created accounts appear immediately without a manual refresh.
+  useEffect(() => {
+    const channel = supabase
+      .channel('manage-admins-profiles')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          // Re-fetch the filtered admin list whenever profiles table changes.
+          // We do a full refetch (not optimistic update) for correctness.
+          fetchAdmins();
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Create ───────────────────────────────────────────────────────────────
   async function createAdmin() {
     setCreating(true); setError('');
     try {
-      // Call the secure Edge Function — service-role key never touches the browser.
-      // email_confirm: true is set server-side, so no verification email is sent.
-      // The Super Admin's own session is untouched (we never call signUp here).
       const { data, error: fnErr } = await supabase.functions.invoke('create-user', {
-        body: {
-          username: form.username,
-          email: form.email,
-          password: form.password,
-          role: 'admin',
-        },
+        body: { username: form.username, email: form.email, password: form.password, role: 'admin' },
       });
       if (fnErr) throw new Error(fnErr.message);
       if (data?.error) throw new Error(data.error);
       toast.success(`Admin "${form.username}" created!`);
       setShowModal(false);
       setForm({ username: '', email: '', password: '' });
-      await fetchAdmins(); // await: list must be refreshed before setCreating(false) re-renders
+      // Explicit refetch as immediate fallback; Realtime subscription will also fire.
+      await fetchAdmins();
     } catch (err) { setError(err.message); }
     finally { setCreating(false); }
   }
 
+  // ── Toggle / Delete ──────────────────────────────────────────────────────
   async function toggleActive(admin) {
     await supabase.from('profiles').update({ is_active: !admin.is_active }).eq('id', admin.id);
     toast.success(`Account ${admin.is_active ? 'deactivated' : 'activated'}`);
@@ -59,7 +87,8 @@ export default function ManageAdmins() {
   async function deleteAdmin(id) {
     if (!window.confirm('Delete this admin account?')) return;
     await supabase.from('profiles').delete().eq('id', id);
-    toast.success('Admin deleted'); fetchAdmins();
+    toast.success('Admin deleted');
+    fetchAdmins();
   }
 
   return (
@@ -127,21 +156,18 @@ export default function ManageAdmins() {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Username</label>
             <div className="relative">
-              {/* <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" /> */}
               <input className="input-glass pl-9" placeholder="john_admin" value={form.username} onChange={(e) => setForm(f => ({ ...f, username: e.target.value }))} />
             </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email</label>
             <div className="relative">
-              {/* <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" /> */}
               <input className="input-glass pl-9" type="email" placeholder="admin@example.com" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
             </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Password</label>
             <div className="relative">
-              {/* <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" /> */}
               <input className="input-glass pl-9 pr-9" type={showPass ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} />
               <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500">
                 {showPass ? <EyeOff size={15} /> : <Eye size={15} />}

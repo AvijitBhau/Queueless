@@ -32,7 +32,7 @@ export default function PastEvents() {
 
   return (
     <div>
-      <PageHeader title="Past Events" subtitle={`${events.length} completed event${events.length !== 1 ? 's' : ''}`} />
+      <PageHeader title="Completed Patient Queues" subtitle={`${events.length} completed queue${events.length !== 1 ? 's' : ''} — patient history`} />
 
       {loading ? (
         <div className="flex justify-center py-20">
@@ -41,8 +41,8 @@ export default function PastEvents() {
       ) : events.length === 0 ? (
         <GlassCard className="p-12 text-center">
           <History size={48} className="mx-auto text-slate-600 mb-4" />
-          <p className="text-slate-400">No completed events yet.</p>
-          <p className="text-slate-500 text-sm mt-1">Events you end will appear here.</p>
+          <p className="text-slate-400">No completed queues yet.</p>
+          <p className="text-slate-500 text-sm mt-1">Patient queues you end will appear here.</p>
         </GlassCard>
       ) : (
         <div className="space-y-3">
@@ -69,7 +69,7 @@ export default function PastEvents() {
                   <div className="flex items-center gap-4 mt-1 flex-wrap">
                     <div className="flex items-center gap-1">
                       <Users size={11} className="text-slate-500" />
-                      <span className="text-xs text-slate-400">{ticketCount} served</span>
+                      <span className="text-xs text-slate-400">{ticketCount} patients served</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock size={11} className="text-slate-500" />
