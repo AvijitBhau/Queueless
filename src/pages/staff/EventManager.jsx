@@ -72,18 +72,35 @@ export default function EventManager() {
 
   // ── callNext: reads from ticketsRef so it always has the latest tickets ──
   const callNext = useCallback(async () => {
-    // Derive waiting list from the ref, not from closed-over state.
     const currentWaiting = ticketsRef.current
       .filter(t => t.status === 'waiting')
       .sort((a, b) => a.ticket_number - b.ticket_number);
 
+    const currentServing = ticketsRef.current.find(t => t.status === 'serving');
+
     if (!currentWaiting.length) {
-      toast('No more people in queue!', { icon: '🎉' });
+      // Nobody waiting — but if someone IS currently serving, complete them first.
+      // This handles the "last person" case: SERVING → DONE without needing a new person.
+      if (currentServing) {
+        setActionLoading(true);
+        try {
+          await supabase
+            .from('tickets')
+            .update({ status: 'done', served_at: new Date().toISOString() })
+            .eq('id', currentServing.id);
+          await fetchAll();
+          toast.success(`#${currentServing.ticket_number} completed. Queue is empty! 🎉`);
+        } finally { setActionLoading(false); }
+      } else {
+        // Truly empty — nobody waiting, nobody serving.
+        toast('No more people in queue!', { icon: '🎉' });
+      }
       return;
     }
+
+    // There ARE people waiting — normal next-call flow.
     setActionLoading(true);
     try {
-      const currentServing = ticketsRef.current.find(t => t.status === 'serving');
       // Mark current serving ticket as done
       if (currentServing) {
         await supabase
@@ -243,11 +260,13 @@ export default function EventManager() {
                 onClick={callNext}
                 disabled={actionLoading || (!waitingTickets.length && !servingTicket)}
                 className="flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
-                style={{ background: 'linear-gradient(135deg, #10b981, #00d4ff)' }}
+                style={{ background: servingTicket && !waitingTickets.length ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #10b981, #00d4ff)' }}
               >
                 {actionLoading
                   ? <div className="w-5 h-5 rounded-full animate-spin" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white' }} />
-                  : <><SkipForward size={18} /> Next</>
+                  : servingTicket && !waitingTickets.length
+                    ? <><CheckCircle size={18} /> Complete</>
+                    : <><SkipForward size={18} /> Next</>
                 }
               </motion.button>
             </div>

@@ -25,7 +25,12 @@ export default function TicketPage() {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState('');
-  const [notifGranted, setNotifGranted] = useState(false);
+  const [notifGranted, setNotifGranted] = useState(
+    // Initialise from the real browser permission so the button doesn't
+    // show "Enable" when permission was already granted in a prior session.
+    // Guard for browsers where Notification is not defined at all (iOS Safari, WebView).
+    typeof Notification !== 'undefined' && Notification.permission === 'granted'
+  );
   const notifSentRef = useRef(false);
 
   // Derived
@@ -110,8 +115,8 @@ export default function TicketPage() {
       storeTicket(queueCode, data);
       await loadData();
 
-      // Request notification permission
-      if ('Notification' in window && Notification.permission === 'default') {
+      // Request notification permission after joining
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
         Notification.requestPermission().then(p => setNotifGranted(p === 'granted'));
       }
     } catch (err) {
@@ -303,12 +308,24 @@ export default function TicketPage() {
           )}
           <p className="text-xs text-slate-400 flex-1">
             {notifGranted
-              ? 'Notifications enabled — you\'ll be alerted when your turn approaches.'
-              : 'Enable notifications to be alerted when your turn is near.'}
+              ? "Notifications enabled — you'll be alerted when your turn approaches."
+              : typeof Notification === 'undefined'
+                ? 'Notifications are not supported on this browser.'
+                : Notification.permission === 'denied'
+                  ? 'Notifications blocked. Enable them in your browser settings.'
+                  : 'Enable notifications to be alerted when your turn is near.'}
           </p>
-          {!notifGranted && (
+          {/* Show Enable only on supported browsers where permission is not yet granted/denied */}
+          {typeof Notification !== 'undefined'
+            && !notifGranted
+            && Notification.permission !== 'denied'
+            && (
             <button
-              onClick={() => Notification.requestPermission().then(p => setNotifGranted(p === 'granted'))}
+              onClick={() => {
+                // Guard again inside handler — belt and suspenders for all mobile browsers.
+                if (typeof Notification === 'undefined') return;
+                Notification.requestPermission().then(p => setNotifGranted(p === 'granted'));
+              }}
               className="text-xs px-3 py-1.5 rounded-lg font-semibold flex-shrink-0"
               style={{ background: 'rgba(0,212,255,0.15)', color: '#67e8f9', border: '1px solid rgba(0,212,255,0.3)' }}
             >
@@ -316,6 +333,7 @@ export default function TicketPage() {
             </button>
           )}
         </div>
+
 
         <p className="text-center text-xs text-slate-600 mt-6">
           Powered by Queueless • This page updates in real time
