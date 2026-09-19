@@ -9,6 +9,9 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 // Auth
 import LoginPage from './pages/auth/LoginPage';
 
+// Landing
+import LandingPage from './pages/LandingPage';
+
 // SuperAdmin
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import ManageAdmins from './pages/superadmin/ManageAdmins';
@@ -32,17 +35,22 @@ import StaffSettings from './pages/staff/StaffSettings';
 // Customer
 import TicketPage from './pages/customer/TicketPage';
 
-function RoleRedirect() {
+// / → show landing for guests, redirect to dashboard for logged-in users
+function RootRoute() {
   const { user, profile, loading } = useAuth();
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-10 h-10 rounded-full animate-spin" style={{ border: '3px solid rgba(255,255,255,0.1)', borderTop: '3px solid #00d4ff' }} />
     </div>
   );
-  if (!user) return <Navigate to="/login" replace />;
-  if (profile?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
-  if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
-  return <Navigate to="/staff" replace />;
+  // Authenticated — go to the right dashboard
+  if (user) {
+    if (profile?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
+    if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
+    return <Navigate to="/staff" replace />;
+  }
+  // Guest — show landing page
+  return <LandingPage />;
 }
 
 export default function App() {
@@ -67,7 +75,7 @@ export default function App() {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/q/:queueCode" element={<TicketPage />} />
-        <Route path="/" element={<RoleRedirect />} />
+        <Route path="/" element={<RootRoute />} />
 
         {/* SuperAdmin Routes */}
         <Route path="/superadmin" element={
