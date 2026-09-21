@@ -14,17 +14,9 @@ It helps reduce physical waiting lines by allowing patients to scan a QR code, g
 >
 > Do not commit production passwords, API keys, Supabase service-role keys, or other sensitive credentials to a public repository.
 
-### Super Admin
-- **Email:** `YOUR_SUPERADMIN_EMAIL`
-- **Password:** `YOUR_PASSWORD`
-
 ### PHC Admin
-- **Email:** `YOUR_PHC_ADMIN_EMAIL`
-- **Password:** `YOUR_PASSWORD`
-
-### PHC Staff
-- **Email:** `YOUR_PHC_STAFF_EMAIL`
-- **Password:** `YOUR_PASSWORD`
+- **Email:** `central@queueless.com`
+- **Password:** `central321`
 
 ---
 
@@ -375,7 +367,7 @@ QueueLess Health was developed by **Team NexGen Innovators** as a hackathon proj
 ### Team Members
 
 - **Avijit Agarwal** — Developer
-- **[Team Member Name]** — Team Member
+- **Anshika Srivastava** — Team Member
 
 ---
 
