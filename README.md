@@ -18,6 +18,8 @@ It helps reduce physical waiting lines by allowing patients to scan a QR code, g
 - **Email:** `central@queueless.com`
 - **Password:** `central321`
 
+> Please do not modify or delete existing demo data.
+
 ---
 
 ## 🌐 Live Demo
